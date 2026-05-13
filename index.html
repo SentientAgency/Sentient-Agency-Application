@@ -1,0 +1,1503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Sentient — Editor Application</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Open+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --neon: #CCFF00;
+    --black: #000000;
+    --white: #FFFFFF;
+    --bg: #000000;
+    --grey-line: #1c1c1c;
+    --grey-mid: #2a2a2a;
+    --grey-text: #8a8a8a;
+    --grey-text-2: #b8b8b8;
+    --red: #ff3b3b;
+
+    --pad-x: clamp(20px, 5vw, 80px);
+    --col-max: 980px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Open Sans', system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .display {
+    font-family: 'Archivo Black', Helvetica, Arial, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 0.95;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+  .neon { color: var(--neon); }
+  .strike-through { text-decoration: line-through; color: var(--red); }
+  mark.hi { background: var(--neon); color: var(--black); padding: 0 6px; }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--grey-line);
+  }
+  .topbar-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 18px var(--pad-x);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .topbar img { height: 22px; display: block; }
+  .topbar .right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--grey-text);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .topbar .progress-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--white);
+  }
+  .topbar .progress-bar {
+    width: 120px;
+    height: 6px;
+    background: #141414;
+    position: relative;
+    overflow: hidden;
+  }
+  .topbar .progress-fill {
+    position: absolute;
+    inset: 0 100% 0 0;
+    background: var(--neon);
+    transition: right 0.18s ease;
+  }
+  .topbar .doc-id { display: none; }
+  @media (min-width: 720px) { .topbar .doc-id { display: inline; } }
+
+  /* Striped band */
+  .strip {
+    height: 10px;
+    background: repeating-linear-gradient(135deg, var(--neon) 0 18px, var(--black) 18px 30px);
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 64px var(--pad-x) 80px;
+    border-bottom: 1px solid var(--grey-line);
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--neon);
+    margin-bottom: 24px;
+  }
+  .eyebrow.muted { color: var(--grey-text); }
+
+  .hero h1 {
+    font-family: 'Archivo Black', Helvetica, Arial, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+    font-size: clamp(56px, 11vw, 168px);
+    margin: 0 0 40px;
+  }
+  .hero h1 .neon { display: inline-block; }
+
+  .hero .lede {
+    font-size: clamp(20px, 2.2vw, 30px);
+    font-weight: 600;
+    line-height: 1.3;
+    max-width: 1100px;
+    color: var(--grey-text-2);
+    margin: 0 0 36px;
+  }
+  .hero .lede strong { color: var(--white); font-weight: 800; }
+
+  .hero .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    padding-top: 36px;
+    border-top: 1px solid var(--grey-line);
+  }
+  .hero .meta .cell .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--grey-text);
+    margin-bottom: 6px;
+  }
+  .hero .meta .cell .v {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 20px;
+    line-height: 1.15;
+  }
+  .hero .meta .cell .v.sm {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--grey-text-2);
+  }
+
+  /* ============ WARNING BAND ============ */
+  .warning {
+    background: var(--neon);
+    color: var(--black);
+  }
+  .warning-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 56px var(--pad-x);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  @media (min-width: 920px) {
+    .warning-inner { grid-template-columns: 1fr 1.6fr; align-items: center; }
+  }
+  .warning h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    font-size: clamp(40px, 5.5vw, 84px);
+    margin: 0;
+  }
+  .warning p {
+    font-size: clamp(18px, 1.8vw, 22px);
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+  }
+  .warning p + p { margin-top: 16px; }
+  .warning .black-pill {
+    display: inline-block;
+    background: var(--black);
+    color: var(--neon);
+    padding: 4px 10px;
+  }
+
+  /* ============ FORM SHELL ============ */
+  .form-shell {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 var(--pad-x);
+  }
+
+  /* Section */
+  section.q-section {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--grey-line);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  @media (min-width: 1080px) {
+    section.q-section {
+      grid-template-columns: 320px 1fr;
+      gap: 64px;
+    }
+  }
+
+  .sec-head {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    height: max-content;
+  }
+  .sec-head .num {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(48px, 6vw, 88px);
+    color: var(--neon);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .sec-head .num small {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--grey-text);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .sec-head .title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 3vw, 40px);
+    margin-top: 18px;
+    margin-bottom: 14px;
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+  }
+  .sec-head .sub {
+    font-size: 16px;
+    color: var(--grey-text);
+    line-height: 1.45;
+    max-width: 320px;
+  }
+
+  .sec-body { min-width: 0; }
+  .sec-body > * + * { margin-top: 28px; }
+
+  /* Question block */
+  .q {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--grey-line);
+  }
+  .q:last-child { border-bottom: none; padding-bottom: 0; }
+  .q.no-rule { border-bottom: none; padding-bottom: 0; }
+
+  .q .qtag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--neon);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .q .qtag .req { color: var(--red); }
+  .q .qtag .opt { color: var(--grey-text); }
+  .q .qtag .arrow { color: var(--grey-text); }
+
+  .q label.qlabel {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(22px, 2.4vw, 30px);
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+    cursor: text;
+    display: block;
+  }
+  .q .qhelp {
+    font-size: 15px;
+    color: var(--grey-text);
+    line-height: 1.5;
+    max-width: 700px;
+  }
+  .q .qhelp code,
+  .q .qhelp .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: #111;
+    padding: 2px 8px;
+    color: var(--neon);
+    border-radius: 2px;
+  }
+
+  /* Inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="url"],
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #2a2a2a;
+    padding: 14px 0 10px;
+    color: var(--white);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.15s ease;
+    border-radius: 0;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #444;
+    font-weight: 400;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-bottom-color: var(--neon);
+  }
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.5;
+    font-size: 18px;
+  }
+
+  /* Two-column inputs row */
+  .row-2 { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  .row-3 { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  @media (min-width: 720px) {
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .inline-pair { display: flex; gap: 28px; flex-wrap: wrap; }
+  .inline-pair > * { flex: 1; min-width: 220px; }
+
+  /* Select arrow */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5l4 4 4-4' stroke='%23CCFF00' stroke-width='1.5' fill='none' stroke-linecap='square'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+  select option { background: #0a0a0a; color: var(--white); }
+
+  /* Radio / checkbox cards */
+  .opt-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .opt-grid.two { grid-template-columns: 1fr; }
+  @media (min-width: 720px) {
+    .opt-grid.two { grid-template-columns: 1fr 1fr; }
+  }
+  .opt-grid.cols { grid-template-columns: 1fr; }
+  @media (min-width: 720px) {
+    .opt-grid.cols { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  }
+
+  .opt {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--grey-line);
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+    user-select: none;
+  }
+  .opt:hover { border-color: #444; background: #060606; }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt .box {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #3a3a3a;
+    background: transparent;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s ease;
+  }
+  .opt.radio .box { border-radius: 50%; }
+  .opt .box::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    transition: background 0.12s ease;
+  }
+  .opt.radio .box::after { border-radius: 50%; }
+  .opt input:checked ~ .box {
+    border-color: var(--neon);
+    background: transparent;
+  }
+  .opt input:checked ~ .box::after { background: var(--neon); }
+  .opt input:checked ~ .opt-body { color: var(--white); }
+  .opt input:checked + .box ~ .opt-body .opt-title { color: var(--neon); }
+  /* Card-level state when checked */
+  .opt:has(input:checked) {
+    border-color: var(--neon);
+    background: #0a0d00;
+  }
+  .opt-body { color: var(--grey-text-2); }
+  .opt-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 17px;
+    line-height: 1.15;
+    color: var(--white);
+    letter-spacing: 0.005em;
+    margin-bottom: 6px;
+  }
+  .opt-desc { font-size: 14px; line-height: 1.4; color: var(--grey-text); }
+
+  /* Inline tag list (multi-select chips) */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .chip {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block;
+    padding: 10px 18px;
+    border: 1px solid var(--grey-line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey-text-2);
+    transition: all 0.12s ease;
+  }
+  .chip:hover span { border-color: #555; color: var(--white); }
+  .chip input:checked ~ span {
+    background: var(--neon);
+    border-color: var(--neon);
+    color: var(--black);
+    font-weight: 700;
+  }
+
+  /* Yes / No big toggle */
+  .yesno {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 480px;
+  }
+  .yesno .opt { padding: 16px 18px; }
+  .yesno .opt .opt-title { font-size: 18px; margin-bottom: 0; }
+  .yesno .opt .opt-body { display: flex; align-items: center; }
+
+  /* Knowledge check banner */
+  .kc-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--neon);
+    background: rgba(204, 255, 0, 0.04);
+    margin-bottom: 8px;
+  }
+  .kc-banner .kc-mark {
+    font-family: 'Archivo Black', sans-serif;
+    color: var(--neon);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .kc-banner .kc-body {
+    font-size: 14px;
+    color: var(--grey-text-2);
+  }
+
+  /* Vocab "trick" pre-label */
+  .pre-q {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--grey-text);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* Video review embed */
+  .review-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #060606;
+    border: 1px solid var(--grey-line);
+    margin-bottom: 8px;
+  }
+  .review-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .review-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--neon);
+    text-decoration: none;
+    border-bottom: 1px solid var(--neon);
+    padding-bottom: 2px;
+    margin-top: 6px;
+  }
+  .review-link:hover { color: #d8ff33; border-color: #d8ff33; }
+
+  /* ============ FOOTER / SUBMIT ============ */
+  .submit-block {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 80px var(--pad-x) 60px;
+    border-bottom: 1px solid var(--grey-line);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  @media (min-width: 1080px) {
+    .submit-block { grid-template-columns: 1fr 1fr; align-items: end; gap: 64px; }
+  }
+  .submit-block h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(40px, 5vw, 76px);
+    line-height: 0.95;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  .submit-block p {
+    font-size: 17px;
+    color: var(--grey-text);
+    margin: 0;
+    line-height: 1.5;
+    max-width: 540px;
+  }
+  .submit-btn {
+    appearance: none;
+    border: none;
+    background: var(--neon);
+    color: var(--black);
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(22px, 2.4vw, 32px);
+    letter-spacing: 0.02em;
+    padding: 32px 40px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  .submit-btn:hover { background: #d8ff33; }
+  .submit-btn:active { transform: translateY(1px); }
+  .submit-btn .arrow {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+  }
+  .submit-block .miss-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--red);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 14px;
+    min-height: 16px;
+    display: block;
+  }
+
+  /* End footer */
+  footer.colophon {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 40px var(--pad-x) 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--grey-text);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  footer.colophon img { height: 16px; }
+
+  /* Validation flash */
+  .q.flash input,
+  .q.flash select,
+  .q.flash textarea {
+    border-bottom-color: var(--red);
+  }
+  .q.flash .opt-grid,
+  .q.flash .yesno,
+  .q.flash .chips {
+    outline: 1px solid var(--red);
+    outline-offset: 8px;
+  }
+
+  /* Success modal */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--neon);
+    color: var(--black);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: var(--pad-x);
+    animation: slideUp 0.4s ease;
+  }
+  .success-overlay.on { display: flex; }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .success-card {
+    max-width: 900px;
+    width: 100%;
+  }
+  .success-card .em {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    font-weight: 700;
+  }
+  .success-card h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(56px, 9vw, 140px);
+    line-height: 0.9;
+    margin: 0 0 28px;
+    letter-spacing: -0.02em;
+  }
+  .success-card p {
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 600;
+    max-width: 720px;
+    line-height: 1.4;
+    margin: 0 0 12px;
+  }
+  .success-card .black-pill {
+    display: inline-block;
+    background: var(--black);
+    color: var(--neon);
+    padding: 2px 10px;
+  }
+  .success-card .receipt {
+    margin-top: 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: rgba(0,0,0,0.7);
+  }
+
+  /* small touch */
+  ::selection { background: var(--neon); color: var(--black); }
+</style>
+</head>
+<body>
+
+<!-- ================== TOP BAR ================== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <a href="#top" style="display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none;">
+      <img src="assets/sentient-logo-white.png" alt="Sentient" />
+    </a>
+    <div class="right">
+      <span class="doc-id">APP / EDITOR / LONGFORM · 2026.05</span>
+      <span class="progress-pill">
+        <span id="progNum">0%</span>
+        <span class="progress-bar"><span id="progFill" class="progress-fill"></span></span>
+      </span>
+    </div>
+  </div>
+  <div class="strip"></div>
+</div>
+
+<!-- ================== HERO ================== -->
+<section class="hero" id="top">
+  <div class="eyebrow">Application · v1.0 · Longform Editor</div>
+  <h1>
+    EDIT FOR<br/>
+    <span class="neon">SENTIENT.</span>
+  </h1>
+  <p class="lede">
+    We're looking for longform editors for a tech &amp; AI audit series hosted by Matthew Mendoza. Tell us about yourself, show us your work, and walk us through how you think about an edit. <strong>Takes about 12–15 minutes.</strong>
+  </p>
+
+  <div class="meta">
+    <div class="cell">
+      <div class="k">Role</div>
+      <div class="v">Longform Editor</div>
+    </div>
+    <div class="cell">
+      <div class="k">Format</div>
+      <div class="v">8–10 min company audits</div>
+    </div>
+    <div class="cell">
+      <div class="k">Host</div>
+      <div class="v">Matthew Mendoza</div>
+    </div>
+    <div class="cell">
+      <div class="k">Pipeline</div>
+      <div class="v">Frame.io · Premiere</div>
+    </div>
+    <div class="cell">
+      <div class="k">Time to complete</div>
+      <div class="v sm">~12–15 minutes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== INTRO BAND ================== -->
+<section class="warning">
+  <div class="warning-inner">
+    <h2>What we're<br/>looking for.</h2>
+    <div>
+      <p>
+        Editors who can carry an 8–10 minute video on their own — multicam sync, tight pacing, real B-roll from the subject's own feeds, and a clean audio mix. Tech literacy helps; taste matters more.
+      </p>
+      <p>
+        We're a small team and we read every application personally. <span class="black-pill">Be specific, be honest</span> — it's the fastest way to a yes.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================== FORM ================== -->
+<!--
+  FORMSPREE INTEGRATION
+  ---------------------
+  Replace YOUR_FORM_ID below with the ID from your Formspree dashboard
+  (Form Endpoints → e.g. https://formspree.io/f/xqkrabcd → "xqkrabcd").
+
+  Optional extras you can wire on the Formspree dashboard:
+    · Reply-to             → the applicant's "email" field is mapped via _replyto below
+    · Subject              → set via _subject hidden field below
+    · Auto-response email  → enable in Formspree settings
+    · Spam filter          → already on by default
+-->
+<form id="editor-app" class="form-shell"
+      action="https://formspree.io/f/xrejvzpv"
+      method="POST"
+      accept-charset="UTF-8"
+      novalidate>
+
+  <!-- Formspree meta fields -->
+  <input type="hidden" name="_subject" value="New editor application — Sentient" />
+  <input type="hidden" name="_format" value="plain" />
+  <!-- Honeypot: bots fill this; humans don't see it. Formspree drops these. -->
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+         style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" />
+
+<!-- ============ 01 IDENTITY ============ -->
+<section class="q-section" id="sec-01">
+  <div class="sec-head">
+    <div class="num"><small>Section · 01 of 09</small>01</div>
+    <div class="title">Who you<br/>actually are.</div>
+    <div class="sub">Legal name and real contact. We pay through these.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q">
+      <div class="qtag"><span>Q.01.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel" for="f-name">Full legal name.</label>
+      <input id="f-name" name="name" type="text" placeholder="First Last" data-required />
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.01.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Email and WhatsApp.</label>
+      <div class="qhelp">Matthew handles notifications on WhatsApp only — include the number you actually answer on.</div>
+      <div class="row-2">
+        <input name="_replyto" type="email" placeholder="you@domain.com" data-required />
+        <input name="whatsapp" type="tel" placeholder="+1 415 555 0123" data-required />
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.01.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Where do you cut from?</label>
+      <div class="qhelp">City, country, and the timezone you're awake in. Overlap with US Eastern matters.</div>
+      <div class="row-3">
+        <input name="city" type="text" placeholder="City" data-required />
+        <input name="country" type="text" placeholder="Country" data-required />
+        <select name="tz" data-required>
+          <option value="">Timezone…</option>
+          <option>UTC−12</option><option>UTC−11</option><option>UTC−10</option>
+          <option>UTC−9</option><option>UTC−8 / PT</option><option>UTC−7 / MT</option>
+          <option>UTC−6 / CT</option><option>UTC−5 / ET</option><option>UTC−4</option>
+          <option>UTC−3</option><option>UTC−2</option><option>UTC−1</option>
+          <option>UTC+0 / GMT</option><option>UTC+1 / CET</option><option>UTC+2 / EET</option>
+          <option>UTC+3</option><option>UTC+4</option><option>UTC+5</option>
+          <option>UTC+5:30 / IST</option><option>UTC+6</option><option>UTC+7</option>
+          <option>UTC+8</option><option>UTC+9 / JST</option><option>UTC+10</option>
+          <option>UTC+11</option><option>UTC+12</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.01.4</span><span class="arrow">→</span><span class="opt">Optional</span></div>
+      <label class="qlabel">How did you find Sentient?</label>
+      <input name="referral" type="text" placeholder="A tweet, a video, a person." />
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 WORK ============ -->
+<section class="q-section" id="sec-02">
+  <div class="sec-head">
+    <div class="num"><small>Section · 02 of 09</small>02</div>
+    <div class="title">Show the work.</div>
+    <div class="sub">Links, not adjectives. We will watch them.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q">
+      <div class="qtag"><span>Q.02.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Three longform pieces you cut.</label>
+      <div class="qhelp">YouTube links preferred. <span class="mono">8+ minutes each.</span> Newer in your career? Link what you have and tell us what role you played.</div>
+      <input name="reel1" type="url" placeholder="Link 1 — https://…" data-required />
+      <input name="reel2" type="url" placeholder="Link 2 — https://…" data-required style="margin-top:14px;" />
+      <input name="reel3" type="url" placeholder="Link 3 — https://…" data-required style="margin-top:14px;" />
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.02.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Of those three, which is the best?</label>
+      <div class="qhelp">Paste the link again, then — in 2 sentences — tell us what you'd change about it today.</div>
+      <input name="best" type="url" placeholder="Best link — https://…" data-required />
+      <textarea name="bestNote" placeholder="What you'd cut, recut, or scrap." data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.02.3</span><span class="arrow">→</span><span class="opt">Optional</span></div>
+      <label class="qlabel">Channels you've cut for.</label>
+      <div class="qhelp">Handles preferred. If you signed an NDA, write <span class="mono">NDA</span> and we'll move on.</div>
+      <textarea name="channels" placeholder="@channel — role · year"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.02.4</span><span class="arrow">→</span><span class="opt">Optional</span></div>
+      <label class="qlabel">Portfolio or social.</label>
+      <div class="row-2">
+        <input name="portfolio" type="url" placeholder="Portfolio site" />
+        <input name="social" type="text" placeholder="@handle (IG, X, TikTok)" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 SETUP ============ -->
+<section class="q-section" id="sec-03">
+  <div class="sec-head">
+    <div class="num"><small>Section · 03 of 09</small>03</div>
+    <div class="title">The rig.</div>
+    <div class="sub">We cut in Premiere. Frame.io is the pipeline. Bring both.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q">
+      <div class="qtag"><span>Q.03.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Primary editor.</label>
+      <div class="opt-grid cols" data-group="editor" data-required>
+        <label class="opt radio">
+          <input type="radio" name="editor" value="premiere" />
+          <span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Adobe Premiere Pro</span><span class="opt-desc">What our pipeline runs on.</span></span>
+        </label>
+        <label class="opt radio">
+          <input type="radio" name="editor" value="davinci" />
+          <span class="box"></span>
+          <span class="opt-body"><span class="opt-title">DaVinci Resolve</span><span class="opt-desc">Works — you'd be switching to Premiere with us.</span></span>
+        </label>
+        <label class="opt radio">
+          <input type="radio" name="editor" value="fcp" />
+          <span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Final Cut Pro</span><span class="opt-desc">Same — you'd be switching.</span></span>
+        </label>
+        <label class="opt radio">
+          <input type="radio" name="editor" value="other" />
+          <span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Something else</span><span class="opt-desc">Tell us below.</span></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.03.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Your machine.</label>
+      <div class="qhelp">CPU/GPU/RAM is enough — we want to know if you can scrub a multicam 4K timeline without dying.</div>
+      <textarea name="rig" placeholder="e.g. M3 Max · 64GB RAM · 2TB SSD" data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.03.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Internet upload speed.</label>
+      <div class="qhelp">Run <a href="https://fast.com" target="_blank" rel="noopener" style="color:var(--neon); border-bottom:1px solid var(--neon);">fast.com</a> if you don't already know. Rough number is fine. Big cloud uploads cost real time.</div>
+      <div class="inline-pair">
+        <input name="upload_mbps" type="number" min="0" max="10000" placeholder="Upload Mbps" data-required />
+        <select name="connection" data-required>
+          <option value="">Connection type…</option>
+          <option>Fiber</option>
+          <option>Cable</option>
+          <option>5G / fixed wireless</option>
+          <option>DSL</option>
+          <option>Satellite (Starlink etc.)</option>
+          <option>Tethered / mobile</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.03.4</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Which of these are you comfortable in?</label>
+      <div class="qhelp">Check the ones you'd hit a deadline with.</div>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="tools[]" value="frameio" /><span>Frame.io</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="ae" /><span>After Effects</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="obs" /><span>OBS Studio</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="izotope" /><span>iZotope RX</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="audition" /><span>Audition</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="photoshop" /><span>Photoshop</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="figma" /><span>Figma</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="multicam" /><span>Multicam sync</span></label>
+        <label class="chip"><input type="checkbox" name="tools[]" value="motion" /><span>Motion graphics</span></label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 SKILLS CHECK ============ -->
+<section class="q-section" id="sec-04">
+  <div class="sec-head">
+    <div class="num"><small>Section · 04 of 09</small>04</div>
+    <div class="title">Editor<br/>knowledge.</div>
+    <div class="sub">A few quick questions on the technical side of longform editing.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="kc-banner">
+      <span class="kc-mark">Skills check</span>
+      <span class="kc-body">These are standard practices any longform editor will know.</span>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.04.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Your default cutting cadence on a longform talking-head.</label>
+      <div class="qhelp">Average shot length you'd cut to before adjusting for energy.</div>
+      <div class="opt-grid two" data-group="asl" data-required>
+        <label class="opt radio"><input type="radio" name="asl" value="2_3" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">2–3 seconds</span></span></label>
+        <label class="opt radio"><input type="radio" name="asl" value="5_6" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">5–6 seconds</span></span></label>
+        <label class="opt radio"><input type="radio" name="asl" value="8_10" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">8–10 seconds</span></span></label>
+        <label class="opt radio"><input type="radio" name="asl" value="12_15" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">12–15 seconds</span></span></label>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.04.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">For a tech-audit video about a specific company, where do you pull B-roll from?</label>
+      <div class="opt-grid" data-group="broll" data-required>
+        <label class="opt radio"><input type="radio" name="broll" value="storyblocks" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Storyblocks / Envato — quick and clean</span></span></label>
+        <label class="opt radio"><input type="radio" name="broll" value="mix" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">A mix of stock and the subject's own content</span></span></label>
+        <label class="opt radio"><input type="radio" name="broll" value="source" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Source first — the subject's own feeds, posts, and videos</span></span></label>
+        <label class="opt radio"><input type="radio" name="broll" value="recreate" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">Recreate everything with motion graphics</span></span></label>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.04.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Loudness target you'd export a YouTube longform at.</label>
+      <div class="opt-grid two" data-group="lufs" data-required>
+        <label class="opt radio"><input type="radio" name="lufs" value="-23" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">−23 LUFS</span></span></label>
+        <label class="opt radio"><input type="radio" name="lufs" value="-16" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">−14 to −16 LUFS</span></span></label>
+        <label class="opt radio"><input type="radio" name="lufs" value="-10" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">−10 LUFS</span></span></label>
+        <label class="opt radio"><input type="radio" name="lufs" value="dontknow" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">I don't normally measure</span></span></label>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.04.4</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Walk us through your dialogue cleanup chain.</label>
+      <div class="qhelp">Plugins, EQ moves, de-noise, breath/pause handling, how music sits under voice. A few lines is plenty.</div>
+      <textarea name="audio" placeholder="e.g. RX de-hum → high-pass 80Hz → DeNoise light → DeBreath manual → music ducked −12dB sidechain…" data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.04.5</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">How would you structure an 8–10 minute video auditing a single tech company?</label>
+      <div class="qhelp">Rough beats — hook, body, close. No right answer; we want to see how you think.</div>
+      <textarea name="structure_text" placeholder="0:00 — open with…" data-required></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 TASTE ============ -->
+<section class="q-section" id="sec-05">
+  <div class="sec-head">
+    <div class="num"><small>Section · 05 of 09</small>05</div>
+    <div class="title">Taste.</div>
+    <div class="sub">A read on how you think about edits, not just how you execute them.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q">
+      <div class="qtag"><span>Q.05.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">A longform channel whose pacing you'd take notes from.</label>
+      <div class="qhelp">One channel. One sentence on the specific thing you'd take.</div>
+      <textarea name="taste1" placeholder="@channel — the specific thing." data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.05.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">A common YouTube cliché you avoid in your own work.</label>
+      <div class="qhelp">Be specific. <span class="mono">"Whoosh transitions"</span> works; <span class="mono">"bad edits"</span> doesn't.</div>
+      <textarea name="taste2" placeholder="The cliché — and why you skip it." data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.05.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">What's one edit move that signals a cheap edit to you?</label>
+      <textarea name="taste3" placeholder="The tell. The smell test." data-required></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 LOGISTICS ============ -->
+<section class="q-section" id="sec-06">
+  <div class="sec-head">
+    <div class="num"><small>Section · 06 of 09</small>06</div>
+    <div class="title">Time and<br/>turnaround.</div>
+    <div class="sub">How you'd actually fit us in.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q">
+      <div class="qtag"><span>Q.06.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Realistic turnaround on one 8–10 minute longform — from rushes to first draft?</label>
+      <div class="opt-grid two" data-group="turnaround" data-required>
+        <label class="opt radio"><input type="radio" name="turnaround" value="24" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">≤ 24 hours</span></span></label>
+        <label class="opt radio"><input type="radio" name="turnaround" value="48" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">48 hours</span></span></label>
+        <label class="opt radio"><input type="radio" name="turnaround" value="72" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">72 hours</span></span></label>
+        <label class="opt radio"><input type="radio" name="turnaround" value="week" /><span class="box"></span>
+          <span class="opt-body"><span class="opt-title">A full week</span></span></label>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.06.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Hours per week you could commit.</label>
+      <div class="inline-pair">
+        <input name="hours" type="number" min="1" max="80" placeholder="Hours/wk" data-required />
+        <select name="commit" data-required>
+          <option value="">Current commitments…</option>
+          <option>Full-time available — no other clients</option>
+          <option>Part-time — 1–2 other recurring clients</option>
+          <option>Side work — primary job elsewhere</option>
+          <option>Freelance — variable load</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.06.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Your rate.</label>
+      <div class="qhelp">Per finished longform (8–10 min) in USD. A range is fine.</div>
+      <div class="inline-pair">
+        <input name="rate" type="text" placeholder="$ per finished video" data-required />
+        <select name="rateType" data-required>
+          <option value="">Structure…</option>
+          <option>Flat per video</option>
+          <option>Hourly</option>
+          <option>Retainer / monthly</option>
+          <option>Open — let's discuss</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.06.4</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Earliest start.</label>
+      <input name="start" type="text" placeholder="e.g. Within a week · End of month · Notice period: 2 weeks" data-required />
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 VIDEO REVIEW ============ -->
+<section class="q-section" id="sec-07">
+  <div class="sec-head">
+    <div class="num"><small>Section · 07 of 09</small>07</div>
+    <div class="title">Watch &amp;<br/>review.</div>
+    <div class="sub">A reference video to see how you think about a real longform edit.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q no-rule">
+      <div class="qtag"><span>Reference</span><span class="arrow">→</span><span class="opt">~10 min watch</span></div>
+      <label class="qlabel">Watch this video, then answer below.</label>
+      <div class="qhelp">Treat it as if you were brought on as the editor of record. We're more interested in <em>how</em> you'd think about it than a list of nits.</div>
+      <div class="review-frame">
+        <iframe
+          src="https://www.youtube.com/embed/rP_D2qRMLhs"
+          title="Reference video for editor review"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
+      </div>
+      <a class="review-link" href="https://youtu.be/rP_D2qRMLhs" target="_blank" rel="noopener">Open on YouTube ↗</a>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.07.1</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">What works well in this video?</label>
+      <div class="qhelp">Pacing, structure, B-roll choices, audio, visuals — anything you'd keep.</div>
+      <textarea name="review_good" placeholder="What lands for you." data-required></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.07.2</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">What would you change or improve?</label>
+      <div class="qhelp">Be specific. Cite timestamps when you can.</div>
+      <textarea name="review_bad" placeholder="What you'd tighten, cut, recut, or rebuild." data-required style="min-height: 140px;"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtag"><span>Q.07.3</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">If you were editing this, what would you do differently from the start?</label>
+      <div class="qhelp">Your approach — hook, structure, B-roll sourcing, visual treatment, audio.</div>
+      <textarea name="review_approach" placeholder="How you'd approach the edit." data-required style="min-height: 140px;"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 WORKING TOGETHER ============ -->
+<section class="q-section" id="sec-08">
+  <div class="sec-head">
+    <div class="num"><small>Section · 08 of 09</small>08</div>
+    <div class="title">Working<br/>together.</div>
+    <div class="sub">A few baseline expectations — we want editors who are aligned on these.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q no-rule">
+      <div class="qtag"><span>Q.08</span><span class="arrow">→</span><span class="req">Required</span></div>
+
+      <div class="opt-grid" data-group="acks" data-min="5">
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="comm" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I communicate clearly and ask questions early.</span>
+            <span class="opt-desc">Before I cut, not after delivery.</span>
+          </span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="deadline" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I hit agreed deadlines, or flag delays in advance.</span>
+            <span class="opt-desc">No silent misses.</span>
+          </span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="source" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I prefer source footage over stock when available.</span>
+            <span class="opt-desc">If a piece is about a real company, the B-roll comes from them.</span>
+          </span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="brand" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I respect brand guidelines once they're shared with me.</span>
+            <span class="opt-desc">Palette, type, logo treatment — as documented.</span>
+          </span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="revisions" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I take revisions cleanly and don't take notes personally.</span>
+            <span class="opt-desc">First pass is rarely the last.</span>
+          </span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" name="ack[]" value="pipeline" />
+          <span class="box"></span>
+          <span class="opt-body">
+            <span class="opt-title">I'll deliver on whatever pipeline the team uses.</span>
+            <span class="opt-desc">Frame.io, Dropbox, anything — I follow the process given.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 FINAL ============ -->
+<section class="q-section" id="sec-09">
+  <div class="sec-head">
+    <div class="num"><small>Section · 09 of 09</small>09</div>
+    <div class="title">Last words.</div>
+    <div class="sub">One paragraph. To the person reading this on the other end.</div>
+  </div>
+
+  <div class="sec-body">
+    <div class="q no-rule">
+      <div class="qtag"><span>Q.09</span><span class="arrow">→</span><span class="req">Required</span></div>
+      <label class="qlabel">Anything else?</label>
+      <div class="qhelp">Caveats, context, why you'd be a good fit. Skip the "thanks for the opportunity" line — we already know.</div>
+      <textarea name="last" placeholder="One paragraph." data-required style="min-height:160px;"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUBMIT ============ -->
+<div class="submit-block">
+  <div>
+    <h2>Send it.</h2>
+    <p>
+      Submissions are reviewed weekly. If we'd like to move forward, Matthew will reach out on WhatsApp within 7 days. Either way, you'll hear back.
+    </p>
+    <span class="miss-msg" id="missMsg">&nbsp;</span>
+  </div>
+  <div>
+    <button type="submit" class="submit-btn">
+      <span>Submit application</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+</div>
+
+</form>
+
+<footer class="colophon">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <img src="assets/sentient-logo-white.png" alt="Sentient" />
+    <span>© Sentient</span>
+  </div>
+  <div>App / Editor / Longform · v1.1 · 2026.05</div>
+  <div>Reviewed weekly by Matthew Mendoza</div>
+</footer>
+
+<!-- ================== SUCCESS ================== -->
+<div class="success-overlay" id="success">
+  <div class="success-card">
+    <div class="em">Application received · <span id="receiptId">SNT-…</span></div>
+    <h2>SUBMITTED.<br/>THANK YOU.</h2>
+    <p>You'll hear from Matthew on the WhatsApp number you provided, typically within 7 days.</p>
+    <p>If we'd like to move forward, the next message will include next steps and onboarding details.</p>
+    <p>If it's not a fit this round, you'll still hear back.</p>
+    <div class="receipt">
+      Logged · <span id="receiptTime">…</span> · Channel: WhatsApp · Reviewer: Matthew Mendoza
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById('editor-app');
+  const missMsg = document.getElementById('missMsg');
+  const progFill = document.getElementById('progFill');
+  const progNum = document.getElementById('progNum');
+
+  // ---- Progress calculation ----
+  // Pull all required inputs/groups
+  function requiredFields() {
+    const fields = [];
+    // Plain inputs / textareas / selects
+    form.querySelectorAll('[data-required]').forEach(el => {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+        fields.push({ kind: 'value', el });
+      }
+    });
+    // Groups (radios + checkbox sets)
+    form.querySelectorAll('[data-group]').forEach(g => {
+      const name = g.dataset.group;
+      const min = parseInt(g.dataset.min || '1', 10);
+      const required = g.hasAttribute('data-required') || g.dataset.required !== undefined || g.dataset.min;
+      if (required) {
+        fields.push({ kind: 'group', el: g, name, min });
+      }
+    });
+    return fields;
+  }
+
+  function isFieldFilled(f) {
+    if (f.kind === 'value') {
+      const v = (f.el.value || '').trim();
+      return v.length > 0;
+    }
+    if (f.kind === 'group') {
+      const checked = f.el.querySelectorAll('input:checked');
+      return checked.length >= f.min;
+    }
+    return false;
+  }
+
+  function updateProgress() {
+    const fields = requiredFields();
+    const done = fields.filter(isFieldFilled).length;
+    const total = fields.length || 1;
+    const pct = Math.round((done / total) * 100);
+    progFill.style.right = (100 - pct) + '%';
+    progNum.textContent = pct + '%';
+  }
+
+  form.addEventListener('input', updateProgress);
+  form.addEventListener('change', updateProgress);
+  updateProgress();
+
+  // ---- Submit: validate → POST to Formspree via fetch ----
+  const submitBtn = form.querySelector('.submit-btn');
+  const submitLabel = submitBtn.querySelector('span:first-child');
+  const submitArrow = submitBtn.querySelector('.arrow');
+  const originalLabel = submitLabel.textContent;
+
+  function setBusy(busy) {
+    submitBtn.disabled = busy;
+    submitBtn.style.opacity = busy ? '0.7' : '1';
+    submitBtn.style.cursor = busy ? 'wait' : 'pointer';
+    submitLabel.textContent = busy ? 'Sending…' : originalLabel;
+    submitArrow.style.opacity = busy ? '0.4' : '1';
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    // 1. Client-side validation
+    const fields = requiredFields();
+    let firstMiss = null;
+    let missCount = 0;
+    form.querySelectorAll('.q.flash').forEach(q => q.classList.remove('flash'));
+
+    fields.forEach(f => {
+      if (!isFieldFilled(f)) {
+        missCount++;
+        const qBlock = f.el.closest('.q');
+        if (qBlock) qBlock.classList.add('flash');
+        if (!firstMiss) firstMiss = qBlock || f.el;
+      }
+    });
+
+    if (missCount > 0) {
+      missMsg.style.color = 'var(--red)';
+      missMsg.textContent = '✕ ' + missCount + ' field' + (missCount === 1 ? '' : 's') + ' still empty. Scroll up — they\'re marked.';
+      if (firstMiss) {
+        const r = firstMiss.getBoundingClientRect();
+        window.scrollTo({ top: window.scrollY + r.top - 120, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    // 2. Guard against unset Formspree ID
+    if (form.action.includes('YOUR_FORM_ID')) {
+      missMsg.style.color = 'var(--red)';
+      missMsg.textContent = '✕ Formspree not configured. Paste your form ID into the action URL.';
+      return;
+    }
+
+    // 3. Build a receipt ID and attach to payload
+    const receiptId = 'SNT-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const submittedAt = new Date();
+    let receiptInput = form.querySelector('input[name="_receipt_id"]');
+    if (!receiptInput) {
+      receiptInput = document.createElement('input');
+      receiptInput.type = 'hidden';
+      receiptInput.name = '_receipt_id';
+      form.appendChild(receiptInput);
+    }
+    receiptInput.value = receiptId;
+
+    let tsInput = form.querySelector('input[name="_submitted_at"]');
+    if (!tsInput) {
+      tsInput = document.createElement('input');
+      tsInput.type = 'hidden';
+      tsInput.name = '_submitted_at';
+      form.appendChild(tsInput);
+    }
+    tsInput.value = submittedAt.toISOString();
+
+    // 4. POST to Formspree
+    missMsg.style.color = 'var(--grey-text)';
+    missMsg.textContent = '';
+    setBusy(true);
+
+    try {
+      const data = new FormData(form);
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.ok) {
+        // 5. Success → overlay
+        document.getElementById('receiptId').textContent = receiptId;
+        document.getElementById('receiptTime').textContent =
+          submittedAt.toISOString().slice(0,16).replace('T', ' ') + ' UTC';
+        document.getElementById('success').classList.add('on');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        form.reset();
+        updateProgress();
+      } else {
+        // Formspree returns JSON with an "errors" array on failure
+        let detail = '';
+        try {
+          const body = await res.json();
+          if (body && body.errors && body.errors.length) {
+            detail = ' — ' + body.errors.map(er => er.message || er.code).join(', ');
+          }
+        } catch (_) {}
+        missMsg.style.color = 'var(--red)';
+        missMsg.textContent = '✕ Submission failed (' + res.status + ')' + detail + '. Try again, or email Matthew directly.';
+        setBusy(false);
+      }
+    } catch (err) {
+      missMsg.style.color = 'var(--red)';
+      missMsg.textContent = '✕ Network error — check your connection and try again.';
+      setBusy(false);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
